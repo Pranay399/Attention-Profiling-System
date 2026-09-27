@@ -1,53 +1,76 @@
 """
-Security utilities: password hashing and JWT token management.
+JWT authentication and RBAC security utilities.
 """
 
 from datetime import datetime, timedelta, timezone
+from typing import Optional
+from enum import Enum
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.core.config import settings
+from .config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
 
 
-def hash_password(password: str) -> str:
-    """Hash a plain-text password."""
-    return pwd_context.hash(password)
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    TEACHER = "teacher"
+    STUDENT = "student"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain-text password against its hash."""
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(subject: str, expires_delta: timedelta | None = None) -> str:
-    """
-    Create a JWT access token.
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
 
-    Args:
-        subject: The token subject (user ID as string).
-        expires_delta: Optional custom expiration. Defaults to config value.
-    """
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (
-        expires_delta
-        or timedelta(minutes=settings.access_token_expire_minutes)
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    payload = {"sub": subject, "exp": expire}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def decode_access_token(token: str) -> str | None:
-    """
-    Decode a JWT access token and return the subject (user ID).
-
-    Returns None if the token is invalid or expired.
-    """
+def decode_access_token(token: str) -> dict:
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
-        )
-        return payload.get("sub")
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return payload
     except JWTError:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+async def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
+):
+    """Dependency to get the current authenticated user from JWT. Disabled for dev."""
+    # Dev bypass
+    return {
+        "user_id": 1,
+        "email": "admin@example.com",
+        "role": UserRole.ADMIN,
+    }
+
+
+def require_role(*roles: UserRole):
+    """Dependency factory that requires the user to have one of the specified roles."""
+    async def role_checker(current_user: dict = Depends(get_current_user)):
+        if current_user["role"] not in [r.value for r in roles]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+        return current_user
+    return role_checker

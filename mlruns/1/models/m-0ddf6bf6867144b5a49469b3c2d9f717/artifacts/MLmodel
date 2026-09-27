@@ -1,0 +1,23 @@
+artifact_path: file:C:/Users/prana/Attention Profiling System/mlruns/1/models/m-0ddf6bf6867144b5a49469b3c2d9f717/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.13.1
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.6.1
+    skops_trusted_types: null
+mlflow_version: 3.16.1
+model_id: m-0ddf6bf6867144b5a49469b3c2d9f717
+model_size_bytes: 9817
+model_uuid: m-0ddf6bf6867144b5a49469b3c2d9f717
+prompts: null
+run_id: e67b49d96a894c4fa0d8722adaa9f630
+utc_time_created: '2026-09-26 10:56:16.440396'

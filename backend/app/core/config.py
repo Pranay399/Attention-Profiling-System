@@ -1,55 +1,63 @@
 """
-Application configuration.
-
-All settings are loaded from environment variables with sensible defaults
-for local development. In production, set these via environment or .env file.
+Core configuration for the backend application.
+All settings are loaded from environment variables with sensible defaults.
 """
 
-import os
-from pathlib import Path
 from pydantic_settings import BaseSettings
+from typing import Optional
+from pathlib import Path
+import os
 
 
 class Settings(BaseSettings):
-    """Application settings with environment variable loading."""
+    """Application settings loaded from environment or .env file."""
 
     # Application
-    app_name: str = "Attention Profiling System"
-    app_version: str = "0.1.0"
-    debug: bool = True
-
-    # Paths
-    base_dir: Path = Path(__file__).resolve().parent.parent.parent
-    data_dir: Path = base_dir / "data"
-    upload_dir: Path = data_dir / "uploads"
+    APP_NAME: str = "Attention Profiling System"
+    APP_VERSION: str = "1.0.0"
+    DEBUG: bool = True
+    API_PREFIX: str = "/api/v1"
 
     # Database
-    database_url: str = f"sqlite+aiosqlite:///{base_dir / 'data' / 'app.db'}"
+    DATABASE_URL: str = "sqlite+aiosqlite:///attention_profiling.db"
+    DATABASE_URL_SYNC: str = "sqlite:///attention_profiling.db"
 
-    # Auth
-    secret_key: str = "CHANGE-ME-IN-PRODUCTION-use-openssl-rand-hex-32"
-    access_token_expire_minutes: int = 60 * 24  # 24 hours for dev
-    algorithm: str = "HS256"
+    # JWT Auth
+    SECRET_KEY: str = "dev-secret-key-change-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:5173"]
 
-    # CV Pipeline
-    frame_sample_rate: float = 2.0  # frames per second to analyze
-    face_detection_confidence: float = 0.5
-    face_mesh_confidence: float = 0.5
+    # ML Model
+    MODEL_PATH: str = str(Path(__file__).resolve().parent.parent.parent.parent / "ai" / "models" / "attention_classifier_best.joblib")
+    PIPELINE_PATH: str = str(Path(__file__).resolve().parent.parent.parent.parent / "ai" / "data" / "pipelines" / "preprocessing_pipeline.joblib")
+    FEATURE_SCHEMA_PATH: str = str(Path(__file__).resolve().parent.parent.parent.parent / "ai" / "data" / "pipelines" / "feature_schema.json")
+    MODEL_VERSION: str = "attention-v1"
 
-    # Behavior classification thresholds (degrees)
-    yaw_threshold: float = 30.0  # looking away if |yaw| > this
-    pitch_threshold: float = -20.0  # head down if pitch < this
+    # Attention thresholds (configurable)
+    ATTENTION_INATTENTIVE_THRESHOLD: float = 0.65
+    ATTENTION_PERSISTENCE_SECONDS: float = 5.0
+    ATTENTION_COOLDOWN_SECONDS: float = 30.0
+    ATTENTION_CONFIDENCE_THRESHOLD: float = 0.5
+    ATTENTION_SMOOTHING_WINDOW: int = 10
 
-    # Model metadata
-    model_version: str = "mediapipe-facemesh-0.10"
+    # Video processing
+    TARGET_FPS: int = 10
+    MIN_FPS: int = 5
+    MAX_FPS: int = 15
 
-    model_config = {"env_prefix": "APS_", "env_file": ".env"}
+    # Data retention
+    DATA_RETENTION_DAYS: int = 90
+    AUDIT_LOG_RETENTION_DAYS: int = 365
+
+    # WebSocket
+    WS_HEARTBEAT_INTERVAL: int = 30
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
 
 
 settings = Settings()
-
-# Ensure directories exist at import time
-settings.upload_dir.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,136 @@
+{
+  "summary": {
+    "best_model": "LogisticRegression",
+    "test_f1_macro": 0.9113402531963041,
+    "test_accuracy": 0.9114194236926361
+  },
+  "all_models": {
+    "LogisticRegression": {
+      "val_metrics": {
+        "dataset": "validation",
+        "accuracy": 0.9252934898612594,
+        "precision_macro": 0.9251254447586899,
+        "recall_macro": 0.9252612365959388,
+        "f1_macro": 0.9251891087934448,
+        "f1_class_0": 0.9279835390946503,
+        "f1_class_1": 0.9223946784922394,
+        "roc_auc": 0.9275062742413871,
+        "confusion_matrix": [
+          [
+            451,
+            36
+          ],
+          [
+            34,
+            416
+          ]
+        ],
+        "per_sample_latency_ms": 0.00044525079740998565,
+        "total_inference_time_ms": 0.4171999971731566,
+        "n_samples": 937
+      },
+      "size_kb": 1.2021484375
+    },
+    "RandomForest": {
+      "val_metrics": {
+        "dataset": "validation",
+        "accuracy": 0.9210245464247598,
+        "precision_macro": 0.9208511997080558,
+        "recall_macro": 0.9209856262833676,
+        "f1_macro": 0.9209142007244988,
+        "f1_class_0": 0.9238683127572016,
+        "f1_class_1": 0.917960088691796,
+        "roc_auc": 0.9274788957335158,
+        "confusion_matrix": [
+          [
+            449,
+            38
+          ],
+          [
+            36,
+            414
+          ]
+        ],
+        "per_sample_latency_ms": 0.03536648878830424,
+        "total_inference_time_ms": 33.13839999464108,
+        "n_samples": 937
+      },
+      "size_kb": 4890.6337890625
+    },
+    "XGBoost": {
+      "val_metrics": {
+        "dataset": "validation",
+        "accuracy": 0.9242262540021344,
+        "precision_macro": 0.9240371809607211,
+        "recall_macro": 0.9242345425507643,
+        "f1_macro": 0.9241263530536158,
+        "f1_class_0": 0.9268795056642637,
+        "f1_class_1": 0.9213732004429679,
+        "roc_auc": 0.931537759525439,
+        "confusion_matrix": [
+          [
+            450,
+            37
+          ],
+          [
+            34,
+            416
+          ]
+        ],
+        "per_sample_latency_ms": 0.003220277487485706,
+        "total_inference_time_ms": 3.017400005774107,
+        "n_samples": 937
+      },
+      "size_kb": 154.80078125
+    },
+    "MLP": {
+      "val_metrics": {
+        "dataset": "validation",
+        "accuracy": 0.9220917822838848,
+        "precision_macro": 0.9218731475992887,
+        "recall_macro": 0.9221811544604153,
+        "f1_macro": 0.9220008096288821,
+        "f1_class_0": 0.9246646026831785,
+        "f1_class_1": 0.9193370165745857,
+        "roc_auc": 0.9312069358886608,
+        "confusion_matrix": [
+          [
+            448,
+            39
+          ],
+          [
+            34,
+            416
+          ]
+        ],
+        "per_sample_latency_ms": 0.003107257203580146,
+        "total_inference_time_ms": 2.9114999997545965,
+        "n_samples": 937
+      },
+      "size_kb": 386.5048828125
+    }
+  },
+  "best_model_test_metrics": {
+    "dataset": "test",
+    "accuracy": 0.9114194236926361,
+    "precision_macro": 0.9111881386678335,
+    "recall_macro": 0.9116609628108602,
+    "f1_macro": 0.9113402531963041,
+    "f1_class_0": 0.9139896373056995,
+    "f1_class_1": 0.9086908690869087,
+    "roc_auc": 0.9136481861738535,
+    "confusion_matrix": [
+      [
+        441,
+        46
+      ],
+      [
+        37,
+        413
+      ]
+    ],
+    "per_sample_latency_ms": 0.0006686232630223068,
+    "total_inference_time_ms": 0.6264999974519014,
+    "n_samples": 937
+  }
+}

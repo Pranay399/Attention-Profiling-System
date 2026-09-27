@@ -1,46 +1,15 @@
 """
-Pydantic schemas for request/response validation.
-
-Grouped by domain. Each schema has a clear purpose:
-- *Create: incoming request for creating a resource
-- *Update: incoming request for updating a resource
-- *Response: outgoing response to the client
+Pydantic schemas for API request/response validation.
 """
 
-from datetime import date, datetime
-
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, EmailStr, Field
 
 
-# ── Meta ──────────────────────────────────────────────────────────────────
-
-class ResponseMeta(BaseModel):
-    request_id: str
-    timestamp: datetime
-
-
-class ErrorDetail(BaseModel):
-    code: str
-    message: str
-    details: dict | None = None
-
-
-class ErrorResponse(BaseModel):
-    error: ErrorDetail
-    meta: ResponseMeta
-
-
-# ── Auth ──────────────────────────────────────────────────────────────────
-
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
-    full_name: str = Field(min_length=1, max_length=255)
-    role: str = Field(default="teacher", pattern="^(teacher|administrator|student)$")
-
-
+# ─── Auth ───
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 
@@ -49,154 +18,269 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class UserCreate(BaseModel):
+    email: str
+    password: str = Field(min_length=8)
+    full_name: str
+    role: str = "student"
+
+
 class UserResponse(BaseModel):
-    id: str
+    id: int
     email: str
     full_name: str
     role: str
     is_active: bool
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
 
-# ── Course ────────────────────────────────────────────────────────────────
-
-class CourseCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=255)
-    code: str = Field(min_length=1, max_length=20)
-    description: str | None = None
-
-
-class CourseResponse(BaseModel):
-    id: str
+# ─── Classroom ───
+class ClassroomCreate(BaseModel):
     name: str
-    code: str
-    description: str | None
-    instructor_id: str
+    description: Optional[str] = None
+
+
+class ClassroomUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class ClassroomResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    owner_id: int
+    is_active: bool
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
 
-class CourseDetailResponse(CourseResponse):
-    instructor: UserResponse
-    session_count: int = 0
-
-
-# ── Session ───────────────────────────────────────────────────────────────
-
+# ─── Session ───
 class SessionCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = None
-    session_date: date
+    classroom_id: int
+    title: str
+    scheduled_start: Optional[datetime] = None
+
+
+class SessionUpdate(BaseModel):
+    title: Optional[str] = None
+    status: Optional[str] = None
 
 
 class SessionResponse(BaseModel):
-    id: str
-    course_id: str
+    id: int
+    classroom_id: int
     title: str
-    description: str | None
-    session_date: date
-    created_by: str
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class SessionDetailResponse(SessionResponse):
-    recordings: list["RecordingResponse"] = []
-
-
-# ── Recording ─────────────────────────────────────────────────────────────
-
-class RecordingResponse(BaseModel):
-    id: str
-    session_id: str
-    filename: str
-    file_size_bytes: int | None
-    duration_seconds: float | None
     status: str
-    error_message: str | None
-    uploaded_by: str
+    scheduled_start: Optional[datetime]
+    actual_start: Optional[datetime]
+    actual_end: Optional[datetime]
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
 
-# ── Analysis ──────────────────────────────────────────────────────────────
-
-class AnalysisJobResponse(BaseModel):
-    id: str
-    recording_id: str
-    status: str
-    model_version: str
-    frames_total: int | None
-    frames_processed: int | None
-    started_at: datetime | None
-    completed_at: datetime | None
-    error_message: str | None
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+# ─── Participant ───
+class ParticipantCreate(BaseModel):
+    session_id: int
+    participant_identifier: str
+    display_name: Optional[str] = None
+    user_id: Optional[int] = None
+    video_authorized: bool = False
 
 
 class ParticipantResponse(BaseModel):
-    id: str
-    label: str
-    student_id: str | None
-    first_seen_sec: float | None
-    last_seen_sec: float | None
-    frame_count: int
+    id: int
+    session_id: int
+    participant_identifier: str
+    display_name: Optional[str]
+    user_id: Optional[int]
+    is_active: bool
+    video_authorized: bool
+    joined_at: datetime
+    left_at: Optional[datetime]
 
-    model_config = {"from_attributes": True}
-
-
-class ObservationResponse(BaseModel):
-    id: str
-    participant_id: str
-    timestamp_sec: float
-    frame_number: int
-    behavior: str
-    head_yaw: float | None
-    head_pitch: float | None
-    head_roll: float | None
-    confidence: float | None
-
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
 
-class BehaviorCount(BaseModel):
-    behavior: str
-    count: int
-    percentage: float
+# ─── Meeting Integration ───
+class MeetingIntegrationCreate(BaseModel):
+    session_id: int
+    provider: str = "google_meet"
+    meeting_url: Optional[str] = None
+    meeting_id: Optional[str] = None
 
 
-class ParticipantSummary(BaseModel):
-    participant_id: str
-    label: str
-    total_observations: int
-    behavior_breakdown: list[BehaviorCount]
-    avg_confidence: float | None
+class MeetingIntegrationResponse(BaseModel):
+    id: int
+    session_id: int
+    provider: str
+    meeting_url: Optional[str]
+    meeting_id: Optional[str]
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
-class AnalysisSummary(BaseModel):
-    analysis_id: str
+# ─── Attention Event ───
+class AttentionEventCreate(BaseModel):
+    session_id: int
+    participant_id: int
+    event_type: str
+    probability: float
+    confidence: float
+    duration_seconds: float = 0.0
+    model_version: str
+    metadata_json: Optional[Dict[str, Any]] = None
+
+
+class AttentionEventResponse(BaseModel):
+    id: int
+    session_id: int
+    participant_id: int
+    event_type: str
+    probability: float
+    confidence: float
+    duration_seconds: float
+    model_version: str
+    metadata_json: Optional[Dict[str, Any]]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ─── Attention Metrics ───
+class AttentionMetricResponse(BaseModel):
+    id: int
+    session_id: int
+    participant_id: int
+    window_start: datetime
+    window_end: datetime
+    avg_attentive_prob: float
+    avg_inattentive_prob: float
+    avg_confidence: float
+    attention_state: str
+    face_visible_pct: float
+    data_quality: str
+
+    class Config:
+        from_attributes = True
+
+
+# ─── Session Summary ───
+class SessionSummaryResponse(BaseModel):
+    id: int
+    session_id: int
+    total_duration_seconds: float
     total_participants: int
-    total_observations: int
-    duration_seconds: float | None
-    overall_behavior_distribution: list[BehaviorCount]
-    participant_summaries: list[ParticipantSummary]
+    avg_attention_probability: Optional[float]
+    attention_distribution: Optional[Dict[str, int]]
+    total_events: int
+    event_breakdown: Optional[Dict[str, int]]
+    model_version: Optional[str]
+    data_quality_summary: Optional[Dict[str, Any]]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
-class TimelineBucket(BaseModel):
-    """A time bucket for the behavior timeline chart."""
-    timestamp_sec: float
+# ─── Model Version ───
+class ModelVersionCreate(BaseModel):
+    model_name: str
+    version: str
+    training_dataset: Optional[str] = None
+    feature_schema_version: Optional[str] = None
+    metrics: Optional[Dict[str, Any]] = None
+    model_path: Optional[str] = None
+    status: str = "staging"
+    parameters: Optional[Dict[str, Any]] = None
+    git_commit: Optional[str] = None
+
+
+class ModelVersionResponse(BaseModel):
+    id: int
+    model_name: str
+    version: str
+    training_dataset: Optional[str]
+    feature_schema_version: Optional[str]
+    training_date: Optional[datetime]
+    metrics: Optional[Dict[str, Any]]
+    model_path: Optional[str]
+    status: str
+    parameters: Optional[Dict[str, Any]]
+    git_commit: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ─── WebSocket Messages ───
+class WSAttentionEvent(BaseModel):
+    """WebSocket message for attention events."""
+    type: str = "attention_event"
+    session_id: int
     participant_id: str
-    label: str
-    behavior: str
-    count: int
+    event_type: str
+    probability: float
+    duration_seconds: float
+    timestamp: str
+    confidence: float
+    model_version: str
 
 
-# Forward reference resolution
-SessionDetailResponse.model_rebuild()
+class WSParticipantState(BaseModel):
+    """WebSocket message for participant state updates."""
+    type: str = "participant_state"
+    session_id: int
+    participant_id: str
+    smoothed_inattentive_prob: float
+    current_state: str
+    state_duration: float
+    confidence: float
+
+
+# ─── Analytics ───
+class SessionAnalytics(BaseModel):
+    session_id: int
+    total_duration_seconds: float
+    total_participants: int
+    avg_attention_probability: Optional[float]
+    attention_distribution: Dict[str, int]
+    events_over_time: List[Dict[str, Any]]
+    participant_timelines: List[Dict[str, Any]]
+    model_confidence_distribution: Dict[str, int]
+    model_version: str
+    data_quality_indicators: Dict[str, Any]
+
+
+# ─── System Health ───
+class SystemHealth(BaseModel):
+    status: str
+    model_loaded: bool
+    model_version: str
+    database_connected: bool
+    active_sessions: int
+    active_websockets: int
+    inference_stats: Dict[str, Any]
+
+
+# ─── Config Update ───
+class ThresholdConfigUpdate(BaseModel):
+    inattentive_threshold: Optional[float] = None
+    persistence_seconds: Optional[float] = None
+    cooldown_seconds: Optional[float] = None
+    confidence_threshold: Optional[float] = None
+    smoothing_window: Optional[int] = None
+    target_fps: Optional[int] = None
